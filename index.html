@@ -10,24 +10,13 @@ body{font-family:Arial,Helvetica,sans-serif;line-height:1.8;max-width:800px;marg
 </head>
 <body>
 <h1>111 全文</h1>
-<div id="txt"></div>
+<div id="txt">加载中…</div>
 
 <script>
 const FILE = '111.txt';
-const CHUNK = 10_000;   // 每批 1 万字符
-let pos = 0;
-
 fetch(FILE)
   .then(r => r.ok ? r.text() : Promise.reject('404'))
-  .then(t => {
-      function write() {
-          const end = Math.min(pos + CHUNK, t.length);
-          document.getElementById('txt').textContent += t.slice(pos, end);
-          pos = end;
-          if (pos < t.length) setTimeout(write, 0);   // 让出 UI 线程，不卡
-      }
-      write();
-  })
+  .then(t => document.getElementById('txt').textContent = t)
   .catch(e => document.getElementById('txt').textContent = '加载失败：'+e);
 </script>
 </body>
