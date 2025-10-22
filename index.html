@@ -2,24 +2,73 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<title>111 全文</title>
+<title>111 阅读器（分页）</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
 body{font-family:Arial,Helvetica,sans-serif;line-height:1.8;max-width:800px;margin:0 auto;padding:20px;background:#fafafa}
-.article p{margin:0 0 .6em 0;white-space:pre-wrap;word-break:break-word;user-select:text!important}
+#control{margin-bottom:12px}#jump{width:80px}#txt{min-height:100px}
+p{margin:2px 0;white-space:pre-wrap;word-break:break-word}
+.loading{color:#999}
 </style>
 </head>
 <body>
-<h1>111 全文</h1>
-<article class="article" id="txt"></article>
+<h1>111 阅读器（分页加载）</h1>
+<div id="control">
+  <button id="loadBtn">加载全文</button>
+  <label> 跳转到行 <input id="jump" type="number" min="1"> <button id="goBtn">Go</button></label>
+</div>
+<div id="txt" class="loading">点击按钮开始加载…</div>
 
 <script>
-fetch('111.txt')
-  .then(r => r.ok ? r.text() : Promise.reject('404'))
-  .then(t => {
-      // 每行一个<p>，浏览器认作普通文字，可拖选、可复制
-      document.getElementById('txt').innerHTML = t.split('\n').map(l => `<p>${l}</p>`).join('');
-  })
-  .catch(e => document.getElementById('txt').innerHTML = `<p>加载失败：${e}</p>`);
+const FILE = '111.txt';
+let allLines   = [];      // 全文按行拆
+let shownLines = 0;       // 已渲染行数
+const STEP     = 100;     // 每次追加 100 行
+
+/* 1. 加载文件 */
+document.getElementById('loadBtn').onclick = () => {
+  fetch(FILE)
+    .then(r => r.ok ? r.text() : Promise.reject('404'))
+    .then(t => {
+        allLines = t.split('\n');
+        shownLines = 0;
+        renderMore();           // 首屏
+        bindScroll();           // 滚动自动追加
+    })
+    .catch(e => document.getElementById('txt').textContent = '加载失败：'+e);
+};
+
+/* 2. 渲染下一批 */
+function renderMore() {
+  const frag = document.createDocumentFragment();
+  const end = Math.min(shownLines + STEP, allLines.length);
+  for (let i = shownLines; i < end; i++) {
+     const p = document.createElement('p');
+     p.textContent = allLines[i];
+     frag.appendChild(p);
+  }
+  document.getElementById('txt').appendChild(frag);
+  shownLines = end;
+  if (shownLines >= allLines.length) document.getElementById('txt').classList.remove('loading');
+}
+
+/* 3. 滚动到底自动追加 */
+function bindScroll() {
+  const box = document.getElementById('txt');
+  box.addEventListener('scroll', () => {
+     if (box.scrollTop + box.clientHeight >= box.scrollHeight - 20) {
+         if (shownLines < allLines.length) renderMore();
+     }
+  });
+}
+
+/* 4. 跳转行号 */
+document.getElementById('goBtn').onclick = () => {
+  const n = parseInt(document.getElementById('jump').value, 10);
+  if (!n || n < 1 || n > allLines.length) return;
+  const p = document.querySelectorAll('#txt p')[n - 1];
+  if (p) p.scrollIntoView({ behavior: 'smooth', block: 'center' });
+};
 </script>
 </body>
 </html>
