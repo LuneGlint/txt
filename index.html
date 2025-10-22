@@ -5,19 +5,21 @@
 <title>111 全文</title>
 <style>
 body{font-family:Arial,Helvetica,sans-serif;line-height:1.8;max-width:800px;margin:0 auto;padding:20px;background:#fafafa}
-#txt{white-space:pre-wrap;word-break:break-word}
+.article p{margin:0 0 .6em 0;white-space:pre-wrap;word-break:break-word;user-select:text!important}
 </style>
 </head>
 <body>
 <h1>111 全文</h1>
-<div id="txt">加载中…</div>
+<article class="article" id="txt"></article>
 
 <script>
-const FILE = '111.txt';
-fetch(FILE)
+fetch('111.txt')
   .then(r => r.ok ? r.text() : Promise.reject('404'))
-  .then(t => document.getElementById('txt').textContent = t)
-  .catch(e => document.getElementById('txt').textContent = '加载失败：'+e);
+  .then(t => {
+      // 每行一个<p>，浏览器认作普通文字，可拖选、可复制
+      document.getElementById('txt').innerHTML = t.split('\n').map(l => `<p>${l}</p>`).join('');
+  })
+  .catch(e => document.getElementById('txt').innerHTML = `<p>加载失败：${e}</p>`);
 </script>
 </body>
 </html>
